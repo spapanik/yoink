@@ -1,0 +1,66 @@
+$globals:
+  shell: bash
+  version: "8.1"
+
+update:
+  phony: true
+  requires:
+    - update-keyring
+    - update-packages
+    - update-uv-packages
+    - cleanup-packages
+
+update-all:
+  phony: true
+  requires:
+    - update-mirrorlist
+    - update
+    - update-rust
+    - update-firmware
+
+update-mirrorlist:
+  phony: true
+  echo: true
+  vars:
+    mirrorlist: /etc/pacman.d/mirrorlist
+    mirrorlist_raw: /etc/pacman.d/mirrorlist.raw
+  commands:
+    - reflector --country 'United Kingdom' --protocol https --latest 5 | sudo tee ${mirrorlist_raw} > /dev/null
+    - rankmirrors ${mirrorlist_raw} | sudo tee ${mirrorlist} > /dev/null
+
+update-keyring:
+  phony: true
+  echo: true
+  commands:
+    - sudo pacman -Sy --needed archlinux-keyring
+
+update-packages:
+  phony: true
+  echo: true
+  commands:
+    - yay -Syyuu
+
+update-uv-packages:
+  phony: true
+  echo: true
+  commands:
+    - uv tool upgrade --all
+
+update-rust:
+  phony: true
+  echo: true
+  commands:
+    - rustup update
+
+update-firmware:
+  phony: true
+  echo: true
+  commands:
+    - fwupdmgr refresh && fwupdmgr get-updates && fwupdmgr update || exit 0
+
+cleanup-packages:
+  phony: true
+  echo: true
+  commands:
+    - sudo paccache -rk 2
+    - pacman -Qdtq > /dev/null && sudo pacman -Rsn $(pacman -Qdtq) || exit 0
