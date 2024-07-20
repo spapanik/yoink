@@ -1,0 +1,9 @@
+$globals:
+  shell: bash
+  version: "8.0"
+
+install:
+  requires:
+    - install.py
+  commands:
+    - ./install.py
